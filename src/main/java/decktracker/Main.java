@@ -24,12 +24,24 @@ public class Main {
         ArrayList<String> originalDeck = new ArrayList() {{
             add("Untapped Potential");
         }};
-        while (true) {
+        boolean requestedClose = false;
+        while (!requestedClose) {
             Game game = recordGame(originalDeck);
             String json = OBJECT_MAPPER.writeValueAsString(game);
             saveJsonEntry(json);
-            System.out.println("Enter 'C' to continue, anything else to exit.");
+            requestedClose = isCloseRequested();
         }
+    }
+
+    private static boolean isCloseRequested() {
+        boolean requestedClose;
+        System.out.println("Enter 'C' or 'c' to continue, anything else to exit.");
+        char[] chars = new Scanner(System.in)
+                .next()
+                .toLowerCase()
+                .toCharArray();
+        requestedClose = !(chars.length == 1 && chars[0] == 'c');
+        return requestedClose;
     }
 
     private static void saveJsonEntry(String json) throws IOException {
