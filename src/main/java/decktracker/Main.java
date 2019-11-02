@@ -111,9 +111,9 @@ public class Main {
         } while (value != 0);
     }
 
-    private static Game recordGame(String deckCode, final List<String> deckList) {
+    private static Game recordGame(String deckCode, final ArrayList<String> deckList) {
         System.out.println("Starting new game");
-        List<String> deck = new ArrayList<>();
+        List<String> deck = (List<String>) deckList.clone();
         List<String> hand = new ArrayList<>();
         boolean gameHasFinished = false;
         Scanner sc = new Scanner(System.in);
