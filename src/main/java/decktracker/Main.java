@@ -3,10 +3,7 @@ package decktracker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsonschema.JsonSerializableSchema;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -14,6 +11,8 @@ import java.util.stream.IntStream;
 /**
  * For fun Hearthstone tracker
  * Note: not anything close to production level code
+ *
+ * <a href="https://api.hearthstonejson.com/v1/35057/enUS/cards.collectible.json">Cards collectible json source<</a>
  */
 public class Main {
 
@@ -21,12 +20,44 @@ public class Main {
     public static final String OUTPUT_PATH = "data.json";
 
     public static void main(String[] args) throws IOException {
-        ArrayList<String> originalDeck = new ArrayList() {{
-            add("Untapped Potential");
-        }};
         boolean requestedClose = false;
+        //todo implement decoding
+        String deckCode = "AAEBAZICBOkB4KwC9fwC+KEDDV/+AcQGig60uwLLvALexAKHzgKe0gK7nwOhoQPbpQPZqQMA";
+        ArrayList<String> decklist = new ArrayList<String>() {{
+            add("Innervate");
+            add("Innervate");
+            add("Jade Idol");
+            add("Jade Idol");
+            add("Mistress of Mixtures");
+            add("Mistress of Mixtures");
+            add("Naturalize");
+            add("Untapped Potential");
+            add("Wrath");
+            add("Wrath");
+            add("Jade Blossom");
+            add("Jade Blossom");
+            add("Branching Paths");
+            add("Branching Paths");
+            add("Flobbidinous Floop");
+            add("Poison Seeds");
+            add("Poison Seeds");
+            add("Crystal Stag");
+            add("Crystal Stag");
+            add("Oasis Surger");
+            add("Oasis Surger");
+            add("Khartut Defender");
+            add("Khartut Defender");
+            add("Nourish");
+            add("Nourish");
+            add("Overflow");
+            add("Overflow");
+            add("N'Zoth, the Corruptor");
+            add("Ultimate Infestation");
+            add("Ultimate Infestation");
+        }};
+
         while (!requestedClose) {
-            Game game = recordGame(originalDeck);
+            Game game = recordGame(deckCode, decklist);
             String json = OBJECT_MAPPER.writeValueAsString(game);
             saveJsonEntry(json);
             requestedClose = isCloseRequested();
@@ -66,13 +97,27 @@ public class Main {
         }
     }
 
-    private static Game recordGame(ArrayList<String> originalDeck) {
+    public static void writeVarInt(DataOutputStream dos, int value) throws IOException {
+        //taken from http://wiki.vg/Data_types, altered slightly
+        do {
+            byte temp = (byte) (value & 0b01111111);
+            // Note: >>> means that the sign bit is shifted with the rest of the
+            // number rather than being left alone
+            value >>>= 7;
+            if (value != 0) {
+                temp |= 0b10000000;
+            }
+            dos.writeByte(temp);
+        } while (value != 0);
+    }
+
+    private static Game recordGame(String deckCode, final List<String> deckList) {
         System.out.println("Starting new game");
-        List<String> deck = (List<String>) originalDeck.clone();
+        List<String> deck = new ArrayList<>();
         List<String> hand = new ArrayList<>();
         boolean gameHasFinished = false;
         Scanner sc = new Scanner(System.in);
-        Game game = new Game();
+        Game game = new Game(deckCode);
         while (!gameHasFinished) {
             List<String> displayableDeck = toDisplayable(deck);
             List<String> displayableHand = toDisplayable(hand);
@@ -130,10 +175,15 @@ public class Main {
 
     @JsonSerializableSchema
     public static class Game {
+        String deckCode;
         boolean youWon = false;
         List<String> played = new ArrayList<>();
         List<String> drawn = new ArrayList<>();
         List<String> mulligan = new ArrayList<>();
+
+        public Game(String deckCode) {
+            this.deckCode = deckCode;
+        }
 
         public boolean isYouWon() {
             return youWon;
